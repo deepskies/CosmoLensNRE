@@ -1,1 +1,0 @@
-# My Amazing Science Paper
