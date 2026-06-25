@@ -1,3 +1,15 @@
+"""
+Evaluate the trained NRE on a set of test lens datasets using calibrated MCMC posteriors.
+
+For each test dataset (one fixed cosmology, many lenses), the NRE log-ratio is used as a
+likelihood surrogate in mcmc sampler with calibration correction
+(alpha * sum(logr) + beta). 
+
+Outputs per run:
+  - Parity plot: posterior mean vs. true (w, Om) with fractional residuals and reduced chi-square
+  - Coverage plot: fraction of lenses with true value inside X% CI vs. X% (calibration diagnostic)
+  - Corner plot grid: joint (Om, w) posteriors for up to the first 25 lenses
+"""
 import argparse
 import numpy as np
 import pandas as pd
@@ -63,6 +75,7 @@ cols = ["#DB4437", "#4285F4", "#0F9D58", "#F4B400", "purple", "goldenrod", "peru
 plt.rcParams['axes.prop_cycle'] = plt.cycler(color=cols)
 
 class PosteriorCoverage:
+    """Runs calibrated NRE-MCMC for a single test dataset and returns posterior samples."""
     def __init__(self, model_path, model_name, data_path, w_column_name, om_column_name, zl_column_name, zs_column_name, v_column_name, w_min, w_max, om_min, om_max, alpha, beta):
         self.model_path = model_path
         self.model_name = model_name
@@ -107,7 +120,9 @@ class PosteriorCoverage:
 
     def log_likelihood(self, theta, data, aparam, w_low, w_high, om_low, om_high):
         """
-        Calculate the log likelihood + log prior
+        Calculate the log likelihood + log prior.
+        The calibrated likelihood applies a correction to the summed NRE log-ratio:
+        ll = alpha * sum(logr) + beta, where alpha and beta are fit on a held-out calibration set.
         """
         lp = self.log_prior(theta, w_low, w_high, om_low, om_high)
         if not np.isfinite(lp):
@@ -157,7 +172,11 @@ class PosteriorCoverage:
         return sampler, flat_samples
 
     def get_samples_wom(self, image_dir, walkers=5, nsteps=1000, nburn=200):
-    
+        """
+        Load and preprocess all images in image_dir, then run MCMC to obtain posterior
+        samples over (w, Om) for the shared cosmology of that dataset.
+        Returns flat_samples, marginal w samples, marginal Om samples, and the true parameter values.
+        """
         # read the data
         print('Load the data...')
         images = np.load(image_dir + '/CONFIGURATION_1_images.npy', allow_pickle=True)
@@ -187,6 +206,11 @@ class PosteriorCoverage:
         return flat_samples, samples_w, samples_om, true_w, true_om
 
 def calculate_coverage_fraction_density_estimator(n_lenses, sampled_values_list, truth_array, percentile_list):
+    """
+    Compute the posterior coverage plot data: for each confidence level in percentile_list, calculate the
+    fraction of lenses whose true value falls within the symmetric credible interval of that width.
+    A well-calibrated posterior lies on the diagonal (coverage fraction == confidence level).
+    """
     # sample from posterior probability
     count_array = []
     for i in range(0, n_lenses):
@@ -227,12 +251,6 @@ def plot_joint_with_marginals(
     Plot an n x n grid of corner plots for pairs (Ωm, w).
     Each cell shows: joint posterior (contours at 68/95/99.7%) and marginal posteriors,
     with true lines and truth marker overlaid.
-
-    Styling tweaks:
-      - Contours and histograms in steelblue
-      - Reduced label size and tick lengths
-      - Show tick labels for all plots
-      - Histogram axes: ticks only on the bottom (top ticks off)
     """
     N = len(flat_samples_list)
     if N == 0:
@@ -287,15 +305,12 @@ def plot_joint_with_marginals(
         axes[1, 0].axhline(w_true, linestyle="--", color="k", lw=1.2)
         axes[1, 0].scatter(om_true, w_true, color="k", s=20, marker="s", zorder=5)
 
-        # Ticks: show labels everywhere, reduce tick length
         for ax in fig_corner.get_axes():
             ax.tick_params(axis="both", which="both", labelsize=10, length=3)
 
-        # Histogram axes: ticks only on the bottom (remove top ticks)
         axes[0, 0].tick_params(axis="x", top=False, bottom=True)  # Ωm marginal
         axes[1, 1].tick_params(axis="x", top=False, bottom=True)  # w marginal
 
-        # Ensure tick labels are shown (override any global rc that hides them)
         axes[0, 0].tick_params(labelbottom=True, labelleft=True)
         axes[1, 0].tick_params(labelbottom=True, labelleft=True)
         axes[1, 1].tick_params(labelbottom=True, labelleft=True)
@@ -304,6 +319,7 @@ def plot_joint_with_marginals(
     return fig
 
 def reduced_chisquare(observed, expected, std):
+    """Reduced chi-square"""
     chi2 = np.sum(((observed - expected) / std) ** 2)
     return chi2 / (len(observed) - 1)
 
@@ -373,6 +389,7 @@ def main():
     if not os.path.exists(posterior_path):
         os.mkdir(posterior_path)
 
+    # Skip MCMC if results are already saved for this model/data/calibration combination
     if not os.path.exists(posterior_path+f'{args.data_dir}_mcmc_calibration_alpha{str(args.alpha)}_beta{str(args.beta)}.npz'):
 
         w_min = args.w_min
@@ -508,6 +525,7 @@ def main():
     default_cycler = (cycler(color='bgrcmyk') *
                         cycler(linestyle=['-', '-.']))
 
+    # Coverage plot 
     fig, ax = plt.subplots(1,1,figsize=(8, 8))
     plt.plot(percentile_array_norm, coverage_fraction_w, marker='o', markersize=3, color='steelblue', label=r'$w$')
     plt.plot(percentile_array_norm, coverage_fraction_om, marker='o', markersize=3, color='orange', label=r'$\Omega_m$')

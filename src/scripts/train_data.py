@@ -1,3 +1,6 @@
+"""
+This script generates training data for the NRE model by sampling cosmological parameters (Om_m, w) from a specified range and creating lensing datasets. 
+"""
 import subprocess
 import numpy as np
 import os

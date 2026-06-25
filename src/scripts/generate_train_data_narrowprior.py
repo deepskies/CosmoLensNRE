@@ -1,3 +1,6 @@
+"""
+Script to generate training data for the NRE model from a prior on cosmological parameters (Om0 and w0) using Deeplenstronomy.
+"""
 import argparse
 import yaml
 import numpy as np

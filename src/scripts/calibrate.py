@@ -59,19 +59,7 @@ def get_logr_mcmc(model, images, aparam, sample_theta):
     Output:
     log r 
     '''
-    # Ensure sample_theta is properly shaped
-    # sample_theta = np.array(sample_theta)
-    # # if sample_theta.ndim == 1:
-    # #     sample_theta = sample_theta.reshape(1, -1)
-    
-    # # Create theta array that matches batch size
-    # theta_array = np.tile(sample_theta, (images.shape[0], 1)).astype(np.float32)
-
     theta_array = np.array([sample_theta]*images.shape[0]).astype(np.float32)
-    
-    # Ensure all inputs are float32 and have correct shapes
-    # images = images.astype(np.float32)
-    # aparam = aparam.astype(np.float32)
     images = np.ascontiguousarray(images.astype(np.float32))
     aparam = np.ascontiguousarray(aparam.astype(np.float32))
     theta_array = np.ascontiguousarray(theta_array)
@@ -121,8 +109,15 @@ def get_posterior_mcmc(data, aparam, w_low, w_high, om_low, om_high, model, alph
     """
     MCMC sampling
 
-    Output:
-    Sampler and Samples
+    Input:
+    data: images
+    aparam: astrophysics parameters
+    w_low, w_high: prior range for w    
+    om_low, om_high: prior range for om
+    model: trained NRE model
+    alpha, beta: parameters to calibrate the logr output
+
+    Output: sampler, samples, flat_samples
     """
     pos = np.array([initial_w, initial_om]) + np.array([initial_w, initial_om])*1e-3* np.random.randn(walkers, 2)
     nwalkers, ndim = pos.shape
@@ -132,18 +127,12 @@ def get_posterior_mcmc(data, aparam, w_low, w_high, om_low, om_high, model, alph
     
     if multithread:
         if multithread:
-        # Use context manager to ensure proper cleanup
             with ThreadPoolExecutor(20) as pool:
                 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_likelihood, 
                                               args=(data, aparam, w_low, w_high, om_low, om_high, model, alpha, beta), 
                                               pool=pool)
                 pos, lp, _ = sampler.run_mcmc(pos, nsteps, progress=False)
             
-        # POOL = ThreadPoolExecutor(20)
-        # sampler = emcee.EnsembleSampler(nwalkers, ndim, log_likelihood, 
-        #                               args=(data, aparam, w_low, w_high, om_low, om_high, model, alpha, beta), 
-        #                               pool=POOL)
-        # pos, lp, _ = sampler.run_mcmc(pos, nsteps, progress=False)
     else:
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_likelihood, 
                                       args=(data, aparam, w_low, w_high, om_low, om_high, model, alpha, beta))
@@ -162,9 +151,9 @@ class MCMCConfig:
     nsteps: int = 80
     nburn: int = 20
     n_subset: int = 20
-    multithread: bool = False  # keep False to avoid GPU threading issues
+    multithread: bool = False  
 
-
+# class to optimize alpha and beta parameters
 class AlphaBetaOptimizer:
     def __init__(self, num_sbc_runs=10, model_path=None, data_path=None, model_name=None):
         self.num_sbc_runs = num_sbc_runs
@@ -253,7 +242,6 @@ class AlphaBetaOptimizer:
         """
         Parameters:
         rank_values: array of rank statistics from SBC
-        num_sbc_runs: number of SBC runs 
         """
         # n_bins = max(1, int(self.num_sbc_runs/20))  # Ensure at least 1 bin
         n_bins = int(6)  # Ensure at least 1 bin

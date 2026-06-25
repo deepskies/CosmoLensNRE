@@ -1,3 +1,6 @@
+"""
+Script to generate a dataset of strong lensing images for a single cosmology using Deeplenstronomy.
+"""
 import argparse
 import yaml
 import os

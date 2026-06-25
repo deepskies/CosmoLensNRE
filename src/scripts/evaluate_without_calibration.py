@@ -1,3 +1,14 @@
+"""
+Evaluate the trained NRE on a set of test lens datasets using uncalibrated MCMC posteriors.
+
+Identical in structure to evaluate_with_calibration.py, but the log-likelihood is the raw
+sum of NRE log-ratios with no correction.
+
+Outputs per run:
+  - Parity plot: posterior mean vs. true (w, Om) with fractional residuals and reduced chi-square
+  - Coverage plot: fraction of lenses with true value inside X% CI vs. X% (calibration diagnostic)
+  - Corner plot grid: joint (Om, w) posteriors for up to the first 25 lenses
+"""
 import argparse
 import numpy as np
 import pandas as pd
@@ -62,6 +73,7 @@ cols = ["#DB4437", "#4285F4", "#0F9D58", "#F4B400", "purple", "goldenrod", "peru
 plt.rcParams['axes.prop_cycle'] = plt.cycler(color=cols)
 
 class PosteriorCoverage:
+    """Runs uncalibrated NRE-MCMC for a single test dataset and returns posterior samples."""
     def __init__(self, model_path, model_name, data_path, w_column_name, om_column_name, zl_column_name, zs_column_name, v_column_name, w_min, w_max, om_min, om_max):
         self.model_path = model_path
         self.model_name = model_name
@@ -104,7 +116,8 @@ class PosteriorCoverage:
 
     def log_likelihood(self, theta, data, aparam, w_low, w_high, om_low, om_high):
         """
-        Calculate the log likelihood + log prior
+        Calculate the log likelihood + log prior.
+        Uses the raw sum of NRE log-ratios as the likelihood with no affine correction.
         """
         lp = self.log_prior(theta, w_low, w_high, om_low, om_high)
         if not np.isfinite(lp):
@@ -213,7 +226,7 @@ def plot_joint_with_marginals(
     true_w_list,
     true_om_list,
     n=None,
-    color="steelblue",     # use steelblue for contours and histograms
+    color="steelblue",    
     figsize_per_cell=3.2,
     bins=50,
     output_path=None,
@@ -283,15 +296,12 @@ def plot_joint_with_marginals(
         axes[1, 0].axhline(w_true, linestyle="--", color="k", lw=1.2)
         axes[1, 0].scatter(om_true, w_true, color="k", s=20, marker="s", zorder=5)
 
-        # Ticks: show labels everywhere, reduce tick length
         for ax in fig_corner.get_axes():
             ax.tick_params(axis="both", which="both", labelsize=10, length=3)
 
-        # Histogram axes: ticks only on the bottom (remove top ticks)
         axes[0, 0].tick_params(axis="x", top=False, bottom=True)  # Ωm marginal
         axes[1, 1].tick_params(axis="x", top=False, bottom=True)  # w marginal
 
-        # Ensure tick labels are shown (override any global rc that hides them)
         axes[0, 0].tick_params(labelbottom=True, labelleft=True)
         axes[1, 0].tick_params(labelbottom=True, labelleft=True)
         axes[1, 1].tick_params(labelbottom=True, labelleft=True)
@@ -377,7 +387,7 @@ def main():
         start_time = time.time()
     
         
-        w_column_name = "w0-g" # Dark energy equation-of-state parameter 
+        w_column_name = "w0-g"
         om_column_name = 'Om0-g'
         zl_column_name = 'PLANE_1-REDSHIFT-g'
         zs_column_name = 'PLANE_2-REDSHIFT-g'

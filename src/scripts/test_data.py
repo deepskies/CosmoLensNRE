@@ -1,3 +1,6 @@
+"""
+Script to generate test data for the NRE model. Generates a set of lens datasets with cosmological parameters (w, Om) sampled from specified ranges. 
+"""
 import subprocess
 import numpy as np
 import os

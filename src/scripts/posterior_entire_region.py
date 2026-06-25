@@ -1,3 +1,6 @@
+"""
+Script to estimate the posterior distribution of the cosmological parameters from the test data.
+"""
 import subprocess
 import os
 
