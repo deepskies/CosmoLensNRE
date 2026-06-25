@@ -9,14 +9,11 @@ Neural Ratio Estimation (NRE) for cosmological parameter inference from strong g
 This repository provides code for the paper:
 
 > **Cosmology Inference from Strong Gravitational Lensing using Neural Ratio Estimation**
-> Sreevani Jarugula, Brian Nord, Aleksandra Ćiprijanović, Shubhendu Trivedi
 
 We train a ResNet-based binary classifier on ~2 million simulated DES-noise strong lensing images to learn the likelihood ratio `r(x, θ) = p(x|θ)/p(x)` for the dark energy equation of state `w` and matter density `Ω_m`. Individual per-lens log-ratios are summed across a population of lenses for joint cosmological inference. We demonstrate rank-histogram-based post-hoc calibration and show the method is ~100× more data-efficient than analytical likelihood approaches.
 
 ## Pipeline
-
-*[Figure placeholder: NRE pipeline diagram — `fig:nre_pipeline`]*
-
+![NRE Pipeline](figures/nre_pipeline_png.png)
 ## Installation
 
 Clone the repository and create the conda environment:
