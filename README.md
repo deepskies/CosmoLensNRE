@@ -55,7 +55,7 @@ CosmoLensNRE/
 
 ## Data
 
-Lensing images are simulated using [deeplenstronomy](https://github.com/deepskies/deeplenstronomy) with DES-like noise on a 32×32 pixel grid. Each image is flux-normalized so that pixels sum to `edge_size²`. The training set contains ~2 million images spanning a grid of `(w, Ω_m)` values.
+Lensing images are simulated using [deeplenstronomy](https://github.com/deepskies/deeplenstronomy) with DES-like noise on a 32×32 pixel grid. The training set contains ~2 million images spanning a grid of `(w, Ω_m)` values.
 The train, test, and calibrated dataset is available on Zenodo.
 
 ## Authors
