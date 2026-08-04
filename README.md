@@ -62,7 +62,7 @@ The train, test, and calibrated dataset is available on Zenodo.
 
 - Sreevani Jarugula (Fermilab)
 - Brian Nord (Fermilab / University of Chicago)
-- Aleksandra Ćiprijanović (Fermilab)
+- Aleksandra Ćiprijanović (Fermilab / University of Chicago / SkAI Institute)
 - Shubhendu Trivedi (University of Chicago)
 
 ## Citation
